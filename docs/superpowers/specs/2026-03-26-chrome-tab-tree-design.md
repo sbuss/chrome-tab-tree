@@ -154,6 +154,8 @@ Tabs can be dragged to reorder and reparent within the tree. Uses the HTML Drag 
 - Drop **between** tabs (on the gap/indicator line) → reorder at that position and depth
 - Drop **on** a tab (on the row itself) → reparent as last child of that tab
 
+**Drop indicator animation:** When dragging between tabs, the gap at the insertion point should animate open smoothly (e.g., neighboring tabs ease apart over ~150ms) to create visual space for the drop. The indicator should be "sticky" — once a drop zone activates, it stays open until the cursor moves a meaningful distance away (hysteresis), preventing the gap from flickering open/closed as the user moves slowly through the list.
+
 **Constraints:**
 - Cannot drop a tab onto its own descendant (would create a cycle)
 - Dragging a top-level tab onto the empty space below all tabs → reorder to end of root list
