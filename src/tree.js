@@ -98,6 +98,75 @@ export function removeNode(tree, tabId) {
   return { nodes: newNodes, rootIds: newRootIds };
 }
 
+export function isDescendant(tree, tabId, ancestorId) {
+  let node = tree.nodes[tabId];
+  while (node && node.parentId !== null) {
+    if (node.parentId === ancestorId) return true;
+    node = tree.nodes[node.parentId];
+  }
+  return false;
+}
+
+export function moveNode(tree, tabId, newParentId, index) {
+  const node = tree.nodes[tabId];
+  if (!node) return tree;
+
+  const newNodes = { ...tree.nodes };
+  let newRootIds = [...tree.rootIds];
+
+  // Remove from current location
+  if (node.parentId !== null) {
+    const oldParent = { ...newNodes[node.parentId] };
+    oldParent.children = oldParent.children.filter((id) => id !== tabId);
+    newNodes[node.parentId] = oldParent;
+  } else {
+    newRootIds = newRootIds.filter((id) => id !== tabId);
+  }
+
+  // Insert at new location
+  if (newParentId !== null) {
+    const newParent = { ...newNodes[newParentId] };
+    const children = [...newParent.children];
+    children.splice(index, 0, tabId);
+    newParent.children = children;
+    newNodes[newParentId] = newParent;
+    newNodes[tabId] = { ...node, parentId: newParentId };
+  } else {
+    newRootIds.splice(index, 0, tabId);
+    newNodes[tabId] = { ...node, parentId: null };
+  }
+
+  return { nodes: newNodes, rootIds: newRootIds };
+}
+
+export function reparentNode(tree, tabId, newParentId) {
+  if (tabId === newParentId) return tree;
+  if (isDescendant(tree, newParentId, tabId)) return tree;
+
+  const node = tree.nodes[tabId];
+  if (!node) return tree;
+
+  const newNodes = { ...tree.nodes };
+  let newRootIds = [...tree.rootIds];
+
+  // Remove from current parent
+  if (node.parentId !== null) {
+    const oldParent = { ...newNodes[node.parentId] };
+    oldParent.children = oldParent.children.filter((id) => id !== tabId);
+    newNodes[node.parentId] = oldParent;
+  } else {
+    newRootIds = newRootIds.filter((id) => id !== tabId);
+  }
+
+  // Add as last child of new parent
+  const newParent = { ...newNodes[newParentId] };
+  newParent.children = [...newParent.children, tabId];
+  newNodes[newParentId] = newParent;
+  newNodes[tabId] = { ...node, parentId: newParentId };
+
+  return { nodes: newNodes, rootIds: newRootIds };
+}
+
 export function flattenTree(tree) {
   const result = [];
   function visit(tabId, depth) {

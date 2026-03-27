@@ -1,6 +1,6 @@
 // src/tree.test.js
 import { describe, it, expect } from 'vitest';
-import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree, removeNode } from './tree.js';
+import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree, removeNode, isDescendant, moveNode, reparentNode } from './tree.js';
 
 describe('createTree', () => {
   it('returns empty tree', () => {
@@ -199,5 +199,149 @@ describe('removeNode', () => {
     tree = addRoot(tree, 1);
     const result = removeNode(tree, 99);
     expect(result.rootIds).toEqual([1]);
+  });
+});
+
+describe('isDescendant', () => {
+  it('returns false for unrelated nodes', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    expect(isDescendant(tree, 2, 1)).toBe(false);
+  });
+
+  it('returns true for direct child', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    expect(isDescendant(tree, 2, 1)).toBe(true);
+  });
+
+  it('returns true for deep descendant', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 2, 3);
+    expect(isDescendant(tree, 3, 1)).toBe(true);
+  });
+
+  it('returns false for ancestor (wrong direction)', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    expect(isDescendant(tree, 1, 2)).toBe(false);
+  });
+
+  it('returns false for self', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    expect(isDescendant(tree, 1, 1)).toBe(false);
+  });
+});
+
+describe('moveNode', () => {
+  it('reorders within root siblings', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addRoot(tree, 3);
+    tree = moveNode(tree, 3, null, 0);
+    expect(tree.rootIds).toEqual([3, 1, 2]);
+  });
+
+  it('reorders within parent children', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 1, 3);
+    tree = addChild(tree, 1, 4);
+    tree = moveNode(tree, 4, 1, 0);
+    expect(tree.nodes[1].children).toEqual([4, 2, 3]);
+  });
+
+  it('subtree moves with node', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addChild(tree, 2, 3);
+    tree = addRoot(tree, 4);
+    tree = moveNode(tree, 2, null, 2);
+    expect(tree.rootIds).toEqual([1, 4, 2]);
+    expect(tree.nodes[2].children).toEqual([3]);
+    expect(tree.nodes[3].parentId).toBe(2);
+  });
+
+  it('moves node from one parent to another', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addChild(tree, 1, 3);
+    tree = moveNode(tree, 3, 2, 0);
+    expect(tree.nodes[1].children).toEqual([]);
+    expect(tree.nodes[2].children).toEqual([3]);
+    expect(tree.nodes[3].parentId).toBe(2);
+  });
+
+  it('moves node from parent to root level', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = moveNode(tree, 2, null, 1);
+    expect(tree.rootIds).toEqual([1, 2]);
+    expect(tree.nodes[1].children).toEqual([]);
+    expect(tree.nodes[2].parentId).toBeNull();
+  });
+});
+
+describe('reparentNode', () => {
+  it('moves root tab to become child of another', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = reparentNode(tree, 2, 1);
+    expect(tree.rootIds).toEqual([1]);
+    expect(tree.nodes[1].children).toEqual([2]);
+    expect(tree.nodes[2].parentId).toBe(1);
+  });
+
+  it('moves child to different parent', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addChild(tree, 1, 3);
+    tree = reparentNode(tree, 3, 2);
+    expect(tree.nodes[1].children).toEqual([]);
+    expect(tree.nodes[2].children).toEqual([3]);
+    expect(tree.nodes[3].parentId).toBe(2);
+  });
+
+  it('preserves subtree when reparenting', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addChild(tree, 1, 3);
+    tree = addChild(tree, 3, 4);
+    tree = reparentNode(tree, 3, 2);
+    expect(tree.nodes[3].parentId).toBe(2);
+    expect(tree.nodes[3].children).toEqual([4]);
+    expect(tree.nodes[4].parentId).toBe(3);
+  });
+
+  it('rejects reparenting onto own descendant', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 2, 3);
+    const result = reparentNode(tree, 1, 3);
+    expect(result.nodes[1].parentId).toBeNull();
+    expect(result.rootIds).toEqual([1]);
+  });
+
+  it('rejects reparenting onto self', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    const result = reparentNode(tree, 1, 1);
+    expect(result.rootIds).toEqual([1]);
+    expect(result.nodes[1].parentId).toBeNull();
   });
 });
