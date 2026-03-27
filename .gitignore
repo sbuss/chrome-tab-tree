@@ -1,4 +1,16 @@
-.superpowers/
+# Dependencies
 node_modules/
+
+# Superpowers brainstorm artifacts
+.superpowers/
+
+# Playwright
 test-results/
 playwright-report/
+blob-report/
+
+# Build artifacts
+*.zip
+
+# OS files
+.DS_Store
