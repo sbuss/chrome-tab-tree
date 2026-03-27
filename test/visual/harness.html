@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Tree — Visual Test Harness</title>
+  <link rel="stylesheet" href="../../panel.css">
+  <style>
+    body {
+      padding: 16px;
+    }
+    .scene {
+      margin-bottom: 32px;
+      border: 1px solid #3c4043;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .scene-label {
+      background: #2d2e30;
+      padding: 8px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #9aa0a6;
+      border-bottom: 1px solid #3c4043;
+    }
+    .scene-body {
+      width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <div id="scenes"></div>
+
+  <script type="module">
+    import { createTree, addRoot, addChild, flattenTree } from '../../src/tree.js';
+    import { renderTabRow } from '../../src/render.js';
+
+    const scenesContainer = document.getElementById('scenes');
+
+    function addScene(id, label, renderFn) {
+      const scene = document.createElement('div');
+      scene.className = 'scene';
+      scene.dataset.scene = id;
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'scene-label';
+      labelEl.textContent = label;
+      scene.appendChild(labelEl);
+
+      const body = document.createElement('div');
+      body.className = 'scene-body';
+      renderFn(body);
+      scene.appendChild(body);
+
+      scenesContainer.appendChild(scene);
+    }
+
+    function renderTree(container, tree, tabs, activeTabId) {
+      const flat = flattenTree(tree);
+      for (const { tabId, depth } of flat) {
+        const tab = tabs[tabId];
+        const row = renderTabRow(tabId, depth, tab, tabId === activeTabId);
+        container.appendChild(row);
+      }
+    }
+
+    function makeTab(id, title, favIconUrl) {
+      return { id, title, favIconUrl: favIconUrl || '', url: `https://example.com/${id}` };
+    }
+
+    // --- Scenes ---
+
+    // 1. Single root tab
+    addScene('single-root', 'Single root tab', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      const tabs = { 1: makeTab(1, 'Google Search') };
+      renderTree(container, tree, tabs, null);
+    });
+
+    // 2. Shallow tree (root + 3 children)
+    addScene('shallow-tree', 'Shallow tree (3 children)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addChild(tree, 1, 2);
+      tree = addChild(tree, 1, 3);
+      tree = addChild(tree, 1, 4);
+      const tabs = {
+        1: makeTab(1, 'Wikipedia'),
+        2: makeTab(2, 'History of computing'),
+        3: makeTab(3, 'Alan Turing'),
+        4: makeTab(4, 'Enigma machine'),
+      };
+      renderTree(container, tree, tabs, null);
+    });
+
+    // 3. Deep tree (4 levels)
+    addScene('deep-tree', 'Deep tree (4 levels)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addChild(tree, 1, 2);
+      tree = addChild(tree, 2, 3);
+      tree = addChild(tree, 3, 4);
+      tree = addChild(tree, 1, 5);
+      const tabs = {
+        1: makeTab(1, 'Reddit'),
+        2: makeTab(2, 'r/programming'),
+        3: makeTab(3, 'Show HN: My side project'),
+        4: makeTab(4, 'GitHub - author/repo'),
+        5: makeTab(5, 'r/webdev'),
+      };
+      renderTree(container, tree, tabs, null);
+    });
+
+    // 4. Active tab highlighted
+    addScene('active-tab', 'Active tab highlighted', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addChild(tree, 1, 2);
+      tree = addChild(tree, 1, 3);
+      const tabs = {
+        1: makeTab(1, 'Gmail - Inbox'),
+        2: makeTab(2, 'Compose new message'),
+        3: makeTab(3, 'Settings'),
+      };
+      renderTree(container, tree, tabs, 2);
+    });
+
+    // 5. Long title truncation
+    addScene('long-title', 'Long title truncation', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addChild(tree, 1, 2);
+      tree = addChild(tree, 2, 3);
+      const tabs = {
+        1: makeTab(1, 'This is an extremely long tab title that should be truncated with an ellipsis when it overflows the available width'),
+        2: makeTab(2, 'Another very long title: How to build a Chrome extension with tree-style tab management and visual regression testing'),
+        3: makeTab(3, 'Short'),
+      };
+      renderTree(container, tree, tabs, null);
+    });
+
+    // 6. Missing favicon (placeholder)
+    addScene('missing-favicon', 'Missing favicon (placeholder circles)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addRoot(tree, 2);
+      tree = addRoot(tree, 3);
+      const tabs = {
+        1: makeTab(1, 'Tab with no favicon', ''),
+        2: makeTab(2, 'Another tab without icon', null),
+        3: makeTab(3, 'New Tab'),
+      };
+      renderTree(container, tree, tabs, null);
+    });
+
+    // 7. Many tabs (20+)
+    addScene('many-tabs', 'Many tabs (20 tabs)', (container) => {
+      let tree = createTree();
+      const tabs = {};
+      for (let i = 1; i <= 20; i++) {
+        tree = addRoot(tree, i);
+        tabs[i] = makeTab(i, `Tab number ${i}`);
+      }
+      renderTree(container, tree, tabs, 10);
+    });
+
+    // 8. Drag: dragging state
+    addScene('drag-dragging', 'Drag state: dragging (opacity)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addRoot(tree, 2);
+      tree = addRoot(tree, 3);
+      const tabs = {
+        1: makeTab(1, 'First tab'),
+        2: makeTab(2, 'Dragging this tab'),
+        3: makeTab(3, 'Third tab'),
+      };
+      renderTree(container, tree, tabs, null);
+      container.querySelectorAll('.tab-row')[1].classList.add('dragging');
+    });
+
+    // 9. Drag: drag-over state
+    addScene('drag-over', 'Drag state: drag-over (reparent target)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addRoot(tree, 2);
+      tree = addRoot(tree, 3);
+      const tabs = {
+        1: makeTab(1, 'First tab'),
+        2: makeTab(2, 'Drop target (reparent)'),
+        3: makeTab(3, 'Third tab'),
+      };
+      renderTree(container, tree, tabs, null);
+      container.querySelectorAll('.tab-row')[1].classList.add('drag-over');
+    });
+
+    // 10. Drag: drop-gap-before
+    addScene('drag-gap-before', 'Drag state: gap before (reorder above)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addRoot(tree, 2);
+      tree = addRoot(tree, 3);
+      const tabs = {
+        1: makeTab(1, 'First tab'),
+        2: makeTab(2, 'Gap opens above this'),
+        3: makeTab(3, 'Third tab'),
+      };
+      renderTree(container, tree, tabs, null);
+      container.querySelectorAll('.tab-row')[1].classList.add('drop-gap-before');
+    });
+
+    // 11. Drag: drop-gap-after
+    addScene('drag-gap-after', 'Drag state: gap after (reorder below)', (container) => {
+      let tree = createTree();
+      tree = addRoot(tree, 1);
+      tree = addRoot(tree, 2);
+      tree = addRoot(tree, 3);
+      const tabs = {
+        1: makeTab(1, 'First tab'),
+        2: makeTab(2, 'Gap opens below this'),
+        3: makeTab(3, 'Third tab'),
+      };
+      renderTree(container, tree, tabs, null);
+      container.querySelectorAll('.tab-row')[1].classList.add('drop-gap-after');
+    });
+  </script>
+</body>
+</html>
