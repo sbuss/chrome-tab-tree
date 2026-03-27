@@ -1,6 +1,6 @@
 // src/tree.test.js
 import { describe, it, expect } from 'vitest';
-import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree, removeNode, isDescendant, moveNode, reparentNode } from './tree.js';
+import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree, removeNode, isDescendant, moveNode, reparentNode, reconcile } from './tree.js';
 
 describe('createTree', () => {
   it('returns empty tree', () => {
@@ -343,5 +343,55 @@ describe('reparentNode', () => {
     const result = reparentNode(tree, 1, 1);
     expect(result.rootIds).toEqual([1]);
     expect(result.nodes[1].parentId).toBeNull();
+  });
+});
+
+describe('reconcile', () => {
+  it('removes orphaned nodes not in live tabs', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addChild(tree, 1, 3);
+    tree = reconcile(tree, [1, 3]);
+    expect(tree.rootIds).toEqual([1]);
+    expect(tree.nodes[2]).toBeUndefined();
+    expect(tree.nodes[1].children).toEqual([3]);
+  });
+
+  it('adds new live tabs as roots', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = reconcile(tree, [1, 5, 6]);
+    expect(tree.rootIds).toEqual([1, 5, 6]);
+    expect(tree.nodes[5]).toEqual({ tabId: 5, parentId: null, children: [] });
+    expect(tree.nodes[6]).toEqual({ tabId: 6, parentId: null, children: [] });
+  });
+
+  it('promotes children when parent is orphaned', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 1, 3);
+    tree = reconcile(tree, [2, 3]);
+    expect(tree.rootIds).toContain(2);
+    expect(tree.rootIds).toContain(3);
+    expect(tree.nodes[1]).toBeUndefined();
+  });
+
+  it('returns empty tree reconciled with no live tabs', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = reconcile(tree, []);
+    expect(tree.rootIds).toEqual([]);
+    expect(tree.nodes).toEqual({});
+  });
+
+  it('handles already-in-sync tree', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = reconcile(tree, [1, 2]);
+    expect(tree.rootIds).toEqual([1]);
+    expect(tree.nodes[1].children).toEqual([2]);
   });
 });

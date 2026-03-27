@@ -167,6 +167,65 @@ export function reparentNode(tree, tabId, newParentId) {
   return { nodes: newNodes, rootIds: newRootIds };
 }
 
+export function reconcile(tree, liveTabIds) {
+  const liveSet = new Set(liveTabIds);
+
+  let result = { nodes: { ...tree.nodes }, rootIds: [...tree.rootIds] };
+
+  // Find dead tab IDs (not in live set)
+  const deadIds = Object.keys(result.nodes)
+    .map(Number)
+    .filter((id) => !liveSet.has(id));
+
+  // Remove shallowest nodes first so children are promoted to the dead node's
+  // level before their own ancestors are processed
+  deadIds.sort((a, b) => getDepth(result, a) - getDepth(result, b));
+
+  for (const deadId of deadIds) {
+    if (!result.nodes[deadId]) continue;
+
+    const node = result.nodes[deadId];
+    const newNodes = { ...result.nodes };
+    let newRootIds = [...result.rootIds];
+
+    // Promote each child independently to the dead node's position
+    const children = [...node.children];
+    delete newNodes[deadId];
+
+    if (node.parentId !== null) {
+      // Replace dead node with its children in the parent's children list
+      const parent = { ...newNodes[node.parentId] };
+      const idx = parent.children.indexOf(deadId);
+      const before = parent.children.slice(0, idx);
+      const after = parent.children.slice(idx + 1);
+      parent.children = [...before, ...children, ...after];
+      newNodes[node.parentId] = parent;
+    } else {
+      // Replace dead root with its children in rootIds
+      const idx = newRootIds.indexOf(deadId);
+      const before = newRootIds.slice(0, idx);
+      const after = newRootIds.slice(idx + 1);
+      newRootIds = [...before, ...children, ...after];
+    }
+
+    // Update each child's parentId to the dead node's parentId
+    for (const childId of children) {
+      newNodes[childId] = { ...newNodes[childId], parentId: node.parentId };
+    }
+
+    result = { nodes: newNodes, rootIds: newRootIds };
+  }
+
+  // Add new live tabs not in tree as roots
+  for (const tabId of liveTabIds) {
+    if (!result.nodes[tabId]) {
+      result = addRoot(result, tabId);
+    }
+  }
+
+  return result;
+}
+
 export function flattenTree(tree) {
   const result = [];
   function visit(tabId, depth) {
