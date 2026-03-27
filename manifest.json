@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Tree",
+  "version": "0.1.0",
+  "description": "Tree-style tab management in a side panel",
+  "permissions": ["tabs", "storage", "sidePanel", "webNavigation"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "icons": {
+    "16": "icons/icon.svg",
+    "48": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  },
+  "action": {
+    "default_icon": "icons/icon.svg",
+    "default_title": "Toggle Tab Tree"
+  }
+}
