@@ -1,5 +1,6 @@
 // panel.js
 import { flattenTree, isDescendant } from './src/tree.js';
+import { renderTabRow } from './src/render.js';
 
 let port = null;
 let currentTree = null;
@@ -39,58 +40,18 @@ function render() {
 
   for (const { tabId, depth } of flat) {
     const tab = currentTabs[tabId];
+    const row = renderTabRow(tabId, depth, tab, tabId === activeTabId);
 
-    const row = document.createElement('div');
-    row.className = 'tab-row';
-    row.dataset.tabId = String(tabId);
-    row.dataset.depth = String(depth);
-    if (tabId === activeTabId) row.classList.add('active');
-
-    // Indentation
-    const indent = document.createElement('div');
-    indent.className = 'tab-indent';
-    indent.style.width = `${depth * 16}px`;
-    row.appendChild(indent);
-
-    // Favicon
-    if (tab && tab.favIconUrl) {
-      const favicon = document.createElement('img');
-      favicon.className = 'tab-favicon';
-      favicon.src = tab.favIconUrl;
-      favicon.onerror = () => {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'tab-favicon-placeholder';
-        favicon.replaceWith(placeholder);
-      };
-      row.appendChild(favicon);
-    } else {
-      const placeholder = document.createElement('div');
-      placeholder.className = 'tab-favicon-placeholder';
-      row.appendChild(placeholder);
-    }
-
-    // Title
-    const title = document.createElement('span');
-    title.className = 'tab-title';
-    title.textContent = (tab && tab.title) || 'New Tab';
-    row.appendChild(title);
-
-    // Close button
-    const close = document.createElement('button');
-    close.className = 'tab-close';
-    close.textContent = '\u00D7';
-    close.addEventListener('click', (e) => {
+    // Event listeners (panel-specific, not in shared render)
+    row.querySelector('.tab-close').addEventListener('click', (e) => {
       e.stopPropagation();
       port.postMessage({ type: 'close-tab', tabId });
     });
-    row.appendChild(close);
 
-    // Click to activate
     row.addEventListener('click', () => {
       port.postMessage({ type: 'activate-tab', tabId });
     });
 
-    // Middle-click to close
     row.addEventListener('auxclick', (e) => {
       if (e.button === 1) {
         e.preventDefault();
