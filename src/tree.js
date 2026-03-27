@@ -177,8 +177,13 @@ export function reconcile(tree, liveTabIds) {
     .map(Number)
     .filter((id) => !liveSet.has(id));
 
+  // Unlike removeNode (which promotes first child and makes siblings its children),
+  // reconcile promotes ALL children independently to the dead node's position.
+  // This is correct for session restore: when a parent no longer exists, its
+  // children should become peers at the parent's former level, not be collapsed
+  // under the first child.
   // Remove shallowest nodes first so children are promoted to the dead node's
-  // level before their own ancestors are processed
+  // level before their own ancestors are processed.
   deadIds.sort((a, b) => getDepth(result, a) - getDepth(result, b));
 
   for (const deadId of deadIds) {

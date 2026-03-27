@@ -105,21 +105,6 @@ body {
   color: #e8eaed;
 }
 
-/* Drop indicator line between tabs */
-.drop-indicator {
-  height: 2px;
-  margin: 0 4px;
-  background: #8ab4f8;
-  border-radius: 1px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  pointer-events: none;
-}
-
-.drop-indicator.visible {
-  opacity: 1;
-}
-
 /* Animated gap opening for drop target */
 .tab-row.drop-gap-before {
   margin-top: 12px;

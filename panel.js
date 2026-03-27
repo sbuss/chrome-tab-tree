@@ -1,5 +1,5 @@
 // panel.js
-import { flattenTree } from './src/tree.js';
+import { flattenTree, isDescendant } from './src/tree.js';
 
 let port = null;
 let currentTree = null;
@@ -174,7 +174,7 @@ function initDragAndDrop() {
       if (targetTabId === draggedTabId) return;
 
       // Cycle check: cannot drop onto own descendant
-      if (isDescendantOf(targetTabId, draggedTabId)) return;
+      if (isDescendant(currentTree, targetTabId, draggedTabId)) return;
 
       const rect = row.getBoundingClientRect();
       const y = e.clientY - rect.top;
@@ -217,15 +217,6 @@ function initDragAndDrop() {
       currentDropTarget = null;
     });
   });
-}
-
-function isDescendantOf(tabId, potentialAncestorId) {
-  let node = currentTree.nodes[tabId];
-  while (node && node.parentId !== null) {
-    if (node.parentId === potentialAncestorId) return true;
-    node = currentTree.nodes[node.parentId];
-  }
-  return false;
 }
 
 function clearAllDropFeedback() {
