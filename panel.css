@@ -1,0 +1,132 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #202124;
+  color: #e8eaed;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+#tab-tree {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.tab-row {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 1px 4px;
+  transition: background 0.1s;
+  position: relative;
+}
+
+.tab-row:hover {
+  background: #2d2e30;
+}
+
+.tab-row.active {
+  background: #394457;
+}
+
+.tab-row.drag-over {
+  background: #394457;
+  outline: 2px solid #8ab4f8;
+  outline-offset: -2px;
+}
+
+.tab-row.dragging {
+  opacity: 0.4;
+}
+
+.tab-indent {
+  flex-shrink: 0;
+}
+
+.tab-favicon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+.tab-favicon-placeholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  background: #5f6368;
+  border-radius: 50%;
+}
+
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 32px;
+}
+
+.tab-close {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s;
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.tab-row:hover .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+/* Drop indicator line between tabs */
+.drop-indicator {
+  height: 2px;
+  margin: 0 4px;
+  background: #8ab4f8;
+  border-radius: 1px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.drop-indicator.visible {
+  opacity: 1;
+}
+
+/* Animated gap opening for drop target */
+.tab-row.drop-gap-before {
+  margin-top: 12px;
+  transition: margin 0.15s ease;
+}
+
+.tab-row.drop-gap-after {
+  margin-bottom: 12px;
+  transition: margin 0.15s ease;
+}
