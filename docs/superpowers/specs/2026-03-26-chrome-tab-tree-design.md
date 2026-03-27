@@ -10,6 +10,7 @@ A Chrome extension that provides a tree-style tab management side panel. When a 
 - Track relationships via `openerTabId` — only explicit parent-child, no domain grouping
 - Support arbitrary tree depth (children, grandchildren, etc.)
 - Promote first child when a parent is closed (Firefox Tree Style Tab behavior)
+- Drag-and-drop to reorder tabs and reparent them in the tree
 - Design for future collapse/expand support
 
 ## Non-Goals (MVP)
@@ -17,7 +18,6 @@ A Chrome extension that provides a tree-style tab management side panel. When a 
 - Cross-device sync of tree structure
 - Tab group integration
 - Domain-based grouping
-- Drag-and-drop reordering
 - Collapse/expand UI (data model supports it, UI deferred)
 - Right-click context menus
 
@@ -142,10 +142,25 @@ Each tab is rendered as a row with:
 - No framework — plain HTML/CSS/JS for lightweight footprint
 - Handles narrow panel widths: truncated titles, visible favicons and close buttons
 
+### Drag-and-Drop
+
+Tabs can be dragged to reorder and reparent within the tree. Uses the HTML Drag and Drop API (no library).
+
+**Reorder (same level):** Dragging a tab between siblings at the same depth reorders it. The dragged tab's entire subtree moves with it. A horizontal drop indicator line shows the insertion point.
+
+**Reparent:** Dragging a tab onto another tab makes it a child of the drop target. The dragged tab's subtree is preserved — it becomes a subtree of the new parent. Visual feedback: the drop target highlights when hovered to indicate "drop here to make child."
+
+**Disambiguation:** Drop position determines the operation:
+- Drop **between** tabs (on the gap/indicator line) → reorder at that position and depth
+- Drop **on** a tab (on the row itself) → reparent as last child of that tab
+
+**Constraints:**
+- Cannot drop a tab onto its own descendant (would create a cycle)
+- Dragging a top-level tab onto the empty space below all tabs → reorder to end of root list
+
 ### Future UI (not MVP, but designed for)
 
 - Collapse/expand toggle on parent nodes
-- Drag-and-drop to reparent tabs
 - Right-click context menu (close subtree, close children, etc.)
 
 ## Testing Strategy
@@ -155,6 +170,7 @@ Each tab is rendered as a row with:
 The tree data model and event handling logic are extracted into pure modules with no `chrome.*` dependencies. These are tested with Vitest:
 
 - Tree operations: add child, remove with promotion, reparent, subtree ordering
+- Drag-and-drop model operations: move node between siblings, reparent node, cycle detection (cannot drop onto own descendant)
 - Event handler logic: given event payloads, assert correct tree state transitions
 - Edge cases: rapid creation, Ctrl+T filtering, orphan cleanup
 
