@@ -4,9 +4,39 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg: #ffffff;
+  --text: #202124;
+  --row-hover: #e8eaed;
+  --row-active: #d3e3fd;
+  --drag-over: #d3e3fd;
+  --drag-outline: #1a73e8;
+  --favicon-placeholder: #dadce0;
+  --close-color: #5f6368;
+  --close-hover-bg: #dadce0;
+  --close-hover-color: #202124;
+  --gap-indicator: #1a73e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #202124;
+    --text: #e8eaed;
+    --row-hover: #2d2e30;
+    --row-active: #394457;
+    --drag-over: #394457;
+    --drag-outline: #8ab4f8;
+    --favicon-placeholder: #5f6368;
+    --close-color: #9aa0a6;
+    --close-hover-bg: #3c4043;
+    --close-hover-color: #e8eaed;
+    --gap-indicator: #8ab4f8;
+  }
+}
+
 body {
-  background: #202124;
-  color: #e8eaed;
+  background: var(--bg);
+  color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 13px;
   overflow-x: hidden;
@@ -32,16 +62,16 @@ body {
 }
 
 .tab-row:hover {
-  background: #2d2e30;
+  background: var(--row-hover);
 }
 
 .tab-row.active {
-  background: #394457;
+  background: var(--row-active);
 }
 
 .tab-row.drag-over {
-  background: #394457;
-  outline: 2px solid #8ab4f8;
+  background: var(--drag-over);
+  outline: 2px solid var(--drag-outline);
   outline-offset: -2px;
 }
 
@@ -66,7 +96,7 @@ body {
   height: 16px;
   flex-shrink: 0;
   margin-right: 8px;
-  background: #5f6368;
+  background: var(--favicon-placeholder);
   border-radius: 50%;
 }
 
@@ -90,7 +120,7 @@ body {
   transition: opacity 0.1s, background 0.1s;
   background: none;
   border: none;
-  color: #9aa0a6;
+  color: var(--close-color);
   cursor: pointer;
   font-size: 14px;
   margin-left: 4px;
@@ -101,8 +131,8 @@ body {
 }
 
 .tab-close:hover {
-  background: #3c4043;
-  color: #e8eaed;
+  background: var(--close-hover-bg);
+  color: var(--close-hover-color);
 }
 
 /* Animated gap opening for drop target */

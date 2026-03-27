@@ -3,10 +3,18 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: 'test/visual',
   testMatch: '*.test.js',
-  snapshotPathTemplate: '{testDir}/baselines/{arg}{ext}',
+  snapshotPathTemplate: '{testDir}/baselines/{projectName}/{arg}{ext}',
+  projects: [
+    {
+      name: 'light',
+      use: { browserName: 'chromium', colorScheme: 'light' },
+    },
+    {
+      name: 'dark',
+      use: { browserName: 'chromium', colorScheme: 'dark' },
+    },
+  ],
   use: {
-    browserName: 'chromium',
-    colorScheme: 'dark',
     baseURL: 'http://localhost:3100',
   },
   expect: {
