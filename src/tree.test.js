@@ -1,6 +1,6 @@
 // src/tree.test.js
 import { describe, it, expect } from 'vitest';
-import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree } from './tree.js';
+import { createTree, addRoot, getNode, addChild, getDepth, getSubtreeIds, flattenTree, removeNode } from './tree.js';
 
 describe('createTree', () => {
   it('returns empty tree', () => {
@@ -120,5 +120,84 @@ describe('flattenTree', () => {
       { tabId: 3, depth: 1 },
       { tabId: 5, depth: 0 },
     ]);
+  });
+});
+
+describe('removeNode', () => {
+  it('removes a leaf root tab', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = removeNode(tree, 1);
+    expect(tree.rootIds).toEqual([2]);
+    expect(tree.nodes[1]).toBeUndefined();
+  });
+
+  it('removes a leaf child tab', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 1, 3);
+    tree = removeNode(tree, 2);
+    expect(tree.nodes[1].children).toEqual([3]);
+    expect(tree.nodes[2]).toBeUndefined();
+  });
+
+  it('promotes first child when removing parent (root)', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 1, 3);
+    tree = removeNode(tree, 1);
+    expect(tree.rootIds).toEqual([2]);
+    expect(tree.nodes[2].parentId).toBeNull();
+    expect(tree.nodes[2].children).toEqual([3]);
+    expect(tree.nodes[3].parentId).toBe(2);
+  });
+
+  it('promoted child keeps existing children, siblings appended after', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 2, 5);
+    tree = addChild(tree, 1, 3);
+    tree = addChild(tree, 1, 4);
+    tree = removeNode(tree, 1);
+    expect(tree.rootIds).toEqual([2]);
+    expect(tree.nodes[2].parentId).toBeNull();
+    expect(tree.nodes[2].children).toEqual([5, 3, 4]);
+    expect(tree.nodes[3].parentId).toBe(2);
+    expect(tree.nodes[4].parentId).toBe(2);
+  });
+
+  it('promotes first child when removing non-root parent', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addChild(tree, 1, 2);
+    tree = addChild(tree, 2, 3);
+    tree = addChild(tree, 2, 4);
+    tree = removeNode(tree, 2);
+    expect(tree.nodes[1].children).toEqual([3]);
+    expect(tree.nodes[3].parentId).toBe(1);
+    expect(tree.nodes[3].children).toEqual([4]);
+    expect(tree.nodes[4].parentId).toBe(3);
+  });
+
+  it('preserves root ordering when promoting', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    tree = addRoot(tree, 2);
+    tree = addRoot(tree, 3);
+    tree = addChild(tree, 2, 4);
+    tree = removeNode(tree, 2);
+    expect(tree.rootIds).toEqual([1, 4, 3]);
+    expect(tree.nodes[4].parentId).toBeNull();
+  });
+
+  it('returns tree unchanged for unknown tabId', () => {
+    let tree = createTree();
+    tree = addRoot(tree, 1);
+    const result = removeNode(tree, 99);
+    expect(result.rootIds).toEqual([1]);
   });
 });

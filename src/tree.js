@@ -51,6 +51,53 @@ export function getSubtreeIds(tree, tabId) {
   return result;
 }
 
+export function removeNode(tree, tabId) {
+  const node = tree.nodes[tabId];
+  if (!node) return tree;
+
+  const newNodes = { ...tree.nodes };
+  let newRootIds = [...tree.rootIds];
+
+  if (node.children.length === 0) {
+    // Leaf node: just remove
+    delete newNodes[tabId];
+    if (node.parentId !== null) {
+      const parent = { ...newNodes[node.parentId] };
+      parent.children = parent.children.filter((id) => id !== tabId);
+      newNodes[node.parentId] = parent;
+    } else {
+      newRootIds = newRootIds.filter((id) => id !== tabId);
+    }
+  } else {
+    // Has children: promote first child
+    const [promotedId, ...siblingIds] = node.children;
+    const promoted = { ...newNodes[promotedId] };
+
+    // Promoted child keeps its children, siblings appended after
+    promoted.children = [...promoted.children, ...siblingIds];
+    promoted.parentId = node.parentId;
+    newNodes[promotedId] = promoted;
+
+    // Update siblings to point to promoted as parent
+    for (const sibId of siblingIds) {
+      newNodes[sibId] = { ...newNodes[sibId], parentId: promotedId };
+    }
+
+    // Replace removed node in parent's children or root list
+    if (node.parentId !== null) {
+      const parent = { ...newNodes[node.parentId] };
+      parent.children = parent.children.map((id) => (id === tabId ? promotedId : id));
+      newNodes[node.parentId] = parent;
+    } else {
+      newRootIds = newRootIds.map((id) => (id === tabId ? promotedId : id));
+    }
+
+    delete newNodes[tabId];
+  }
+
+  return { nodes: newNodes, rootIds: newRootIds };
+}
+
 export function flattenTree(tree) {
   const result = [];
   function visit(tabId, depth) {
