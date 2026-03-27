@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:visual": "playwright test test/visual/visual.test.js",
+    "test:visual:update": "playwright test test/visual/visual.test.js --update-snapshots"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "serve": "^14.2.6",
     "vitest": "^3.1.0"
   }
 }
