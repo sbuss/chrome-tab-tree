@@ -195,34 +195,27 @@
       container.querySelectorAll('.tab-row')[1].classList.add('drag-over');
     });
 
-    // 10. Drag: drop-gap-before
-    addScene('drag-gap-before', 'Drag state: gap before (reorder above)', (container) => {
+    // 10. Drag: transform gap (items shift down)
+    addScene('drag-gap-shift', 'Drag state: gap via transform (items shift down)', (container) => {
       let tree = createTree();
       tree = addRoot(tree, 1);
       tree = addRoot(tree, 2);
       tree = addRoot(tree, 3);
+      tree = addRoot(tree, 4);
+      tree = addRoot(tree, 5);
       const tabs = {
         1: makeTab(1, 'First tab'),
-        2: makeTab(2, 'Gap opens above this'),
-        3: makeTab(3, 'Third tab'),
+        2: makeTab(2, 'Second tab'),
+        3: makeTab(3, 'Third tab (gap opens here)'),
+        4: makeTab(4, 'Fourth tab'),
+        5: makeTab(5, 'Fifth tab'),
       };
       renderTree(container, tree, tabs, null);
-      container.querySelectorAll('.tab-row')[1].classList.add('drop-gap-before');
-    });
-
-    // 11. Drag: drop-gap-after
-    addScene('drag-gap-after', 'Drag state: gap after (reorder below)', (container) => {
-      let tree = createTree();
-      tree = addRoot(tree, 1);
-      tree = addRoot(tree, 2);
-      tree = addRoot(tree, 3);
-      const tabs = {
-        1: makeTab(1, 'First tab'),
-        2: makeTab(2, 'Gap opens below this'),
-        3: makeTab(3, 'Third tab'),
-      };
-      renderTree(container, tree, tabs, null);
-      container.querySelectorAll('.tab-row')[1].classList.add('drop-gap-after');
+      // Simulate gap opening before row 3: rows 3, 4, 5 shift down
+      const rows = container.querySelectorAll('.tab-row');
+      for (let i = 2; i < rows.length; i++) {
+        rows[i].style.transform = 'translateY(34px)';
+      }
     });
   </script>
 </body>

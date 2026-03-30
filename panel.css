@@ -57,7 +57,7 @@ body {
   cursor: pointer;
   border-radius: 4px;
   margin: 1px 4px;
-  transition: background 0.1s;
+  transition: background 0.1s, transform 0.15s ease;
   position: relative;
 }
 
@@ -135,13 +135,3 @@ body {
   color: var(--close-hover-color);
 }
 
-/* Animated gap opening for drop target */
-.tab-row.drop-gap-before {
-  margin-top: 12px;
-  transition: margin 0.15s ease;
-}
-
-.tab-row.drop-gap-after {
-  margin-bottom: 12px;
-  transition: margin 0.15s ease;
-}

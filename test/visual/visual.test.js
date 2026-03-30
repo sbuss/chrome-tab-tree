@@ -12,8 +12,7 @@ const scenes = [
   'many-tabs',
   'drag-dragging',
   'drag-over',
-  'drag-gap-before',
-  'drag-gap-after',
+  'drag-gap-shift',
 ];
 
 test.beforeEach(async ({ page }) => {

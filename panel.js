@@ -68,9 +68,10 @@ function render() {
 // --- Drag and Drop ---
 
 let draggedTabId = null;
-let currentDropTarget = null;
+let currentGapIndex = -1; // index in rows[] where the gap opens (items at this index and below shift down)
 let hysteresisTimeout = null;
-const HYSTERESIS_MS = 80;
+const HYSTERESIS_MS = 30;
+const GAP_PX = 34; // full row height gap
 
 function initDragAndDrop() {
   const rows = container.querySelectorAll('.tab-row');
@@ -90,7 +91,7 @@ function initDragAndDrop() {
       row.classList.remove('dragging');
       clearAllDropFeedback();
       clearTimeout(hysteresisTimeout);
-      currentDropTarget = null;
+      currentGapIndex = -1;
     });
 
     row.addEventListener('dragover', (e) => {
@@ -100,31 +101,48 @@ function initDragAndDrop() {
 
       const rect = row.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const zone = y < rect.height * 0.3 ? 'above' : y > rect.height * 0.7 ? 'below' : 'on';
+      // 40% top = above, 20% center = reparent, 40% bottom = below
+      const zone = y < rect.height * 0.4 ? 'above' : y > rect.height * 0.6 ? 'below' : 'on';
 
-      const targetKey = `${row.dataset.tabId}-${zone}`;
-      if (currentDropTarget === targetKey) return;
+      const allRows = [...container.querySelectorAll('.tab-row')];
+      const rowIndex = allRows.indexOf(row);
+      let newGapIndex;
+
+      if (zone === 'on') {
+        newGapIndex = -1; // reparent, no gap
+      } else if (zone === 'above') {
+        newGapIndex = rowIndex;
+      } else {
+        newGapIndex = rowIndex + 1;
+      }
+
+      // Skip if nothing changed
+      const targetKey = zone === 'on' ? `on-${row.dataset.tabId}` : `gap-${newGapIndex}`;
+      if (targetKey === (currentGapIndex === -1 && zone === 'on'
+        ? `on-${row.dataset.tabId}`
+        : `gap-${currentGapIndex}`)) return;
 
       clearTimeout(hysteresisTimeout);
       hysteresisTimeout = setTimeout(() => {
-        currentDropTarget = targetKey;
         clearAllDropFeedback();
 
         if (zone === 'on') {
-          // Reparent: highlight the row
+          currentGapIndex = -1;
           row.classList.add('drag-over');
-        } else if (zone === 'above') {
-          // Reorder above: open gap before this row
-          row.classList.add('drop-gap-before');
         } else {
-          // Reorder below: open gap after this row
-          row.classList.add('drop-gap-after');
+          currentGapIndex = newGapIndex;
+          // Shift all rows at and below the gap index down
+          for (let i = 0; i < allRows.length; i++) {
+            if (i >= currentGapIndex) {
+              allRows[i].style.transform = `translateY(${GAP_PX}px)`;
+            }
+          }
         }
       }, HYSTERESIS_MS);
     });
 
     row.addEventListener('dragleave', () => {
-      // Hysteresis handles cleanup — do nothing here
+      // Hysteresis handles cleanup
     });
 
     row.addEventListener('drop', (e) => {
@@ -134,15 +152,13 @@ function initDragAndDrop() {
       const targetTabId = Number(row.dataset.tabId);
       if (targetTabId === draggedTabId) return;
 
-      // Cycle check: cannot drop onto own descendant
       if (isDescendant(currentTree, targetTabId, draggedTabId)) return;
 
       const rect = row.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const zone = y < rect.height * 0.3 ? 'above' : y > rect.height * 0.7 ? 'below' : 'on';
+      const zone = y < rect.height * 0.4 ? 'above' : y > rect.height * 0.6 ? 'below' : 'on';
 
       if (zone === 'on') {
-        // Reparent as last child
         port.postMessage({
           type: 'reparent-tab',
           tabId: draggedTabId,
@@ -150,7 +166,6 @@ function initDragAndDrop() {
           windowId: currentWindowId,
         });
       } else {
-        // Reorder: determine target parent and index
         const targetNode = currentTree.nodes[targetTabId];
         const parentId = targetNode.parentId;
         const siblings =
@@ -158,7 +173,6 @@ function initDragAndDrop() {
         let index = siblings.indexOf(targetTabId);
         if (zone === 'below') index++;
 
-        // Adjust index if moving within the same parent
         const draggedNode = currentTree.nodes[draggedTabId];
         if (draggedNode.parentId === parentId) {
           const currentIndex = siblings.indexOf(draggedTabId);
@@ -175,19 +189,16 @@ function initDragAndDrop() {
       }
 
       clearAllDropFeedback();
-      currentDropTarget = null;
+      currentGapIndex = -1;
     });
   });
 }
 
 function clearAllDropFeedback() {
   container.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
-  container
-    .querySelectorAll('.drop-gap-before')
-    .forEach((el) => el.classList.remove('drop-gap-before'));
-  container
-    .querySelectorAll('.drop-gap-after')
-    .forEach((el) => el.classList.remove('drop-gap-after'));
+  container.querySelectorAll('.tab-row').forEach((el) => {
+    el.style.transform = '';
+  });
 }
 
 // --- Start ---
